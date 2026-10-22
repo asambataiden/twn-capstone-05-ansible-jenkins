@@ -1,0 +1,31 @@
+
+---
+- name: Ensure Nginx is installed
+  ansible.builtin.apt:
+    name: "{{ webapp_package }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Ensure web document root exists
+  ansible.builtin.file:
+    path: "{{ webapp_document_root }}"
+    state: directory
+    owner: "{{ webapp_owner }}"
+    group: "{{ webapp_group }}"
+    mode: "0755"
+
+- name: Deploy website content
+  ansible.builtin.copy:
+    src: index.html
+    dest: "{{ webapp_document_root }}/index.html"
+    owner: "{{ webapp_owner }}"
+    group: "{{ webapp_group }}"
+    mode: "0644"
+  notify: Reload Nginx
+
+- name: Ensure Nginx service is enabled and running
+  ansible.builtin.service:
+    name: "{{ webapp_service }}"
+    enabled: true
+    state: started

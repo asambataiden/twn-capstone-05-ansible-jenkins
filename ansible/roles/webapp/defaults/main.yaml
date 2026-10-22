@@ -1,0 +1,7 @@
+
+---
+webapp_package: nginx
+webapp_service: nginx
+webapp_document_root: /var/www/html
+webapp_owner: root
+webapp_group: root

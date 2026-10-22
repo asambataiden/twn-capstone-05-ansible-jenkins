@@ -1,0 +1,18 @@
+
+---
+- name: Deploy TWN Capstone 05 website
+  hosts: webservers
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: webapp
+
+  post_tasks:
+    - name: Verify website responds successfully
+      ansible.builtin.uri:
+        url: http://127.0.0.1/
+        method: GET
+        status_code: 200
+        return_content: false
+      changed_when: false
