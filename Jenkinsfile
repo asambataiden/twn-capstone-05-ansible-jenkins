@@ -42,7 +42,6 @@ pipeline {
 
                         ssh \
                           -o BatchMode=yes \
-                          -o IdentitiesOnly=yes \
                           -o StrictHostKeyChecking=yes \
                           -o ConnectTimeout=10 \
                           "$ANSIBLE_USER@$ANSIBLE_HOST" \
@@ -69,7 +68,6 @@ pipeline {
                               ssh \
                                 -T \
                                 -o BatchMode=yes \
-                                -o IdentitiesOnly=yes \
                                 -o StrictHostKeyChecking=yes \
                                 -o ConnectTimeout=10 \
                                 "$ANSIBLE_USER@$ANSIBLE_HOST" \
