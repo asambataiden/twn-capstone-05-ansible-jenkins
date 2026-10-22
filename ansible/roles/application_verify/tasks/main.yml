@@ -1,0 +1,14 @@
+---
+- name: Verify Compose services are running
+  become: true
+  become_user: "{{ docker_user }}"
+  ansible.builtin.command:
+    cmd: docker compose --project-directory {{ application_dir }} ps --status running --services
+  register: running_services
+  changed_when: false
+  failed_when: >-
+    not (['java-app', 'mysql', 'phpmyadmin'] | difference(running_services.stdout_lines) | length == 0)
+
+- name: Show running application services
+  ansible.builtin.debug:
+    msg: "Running services: {{ running_services.stdout_lines | join(', ') }}"

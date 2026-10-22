@@ -1,0 +1,35 @@
+services:
+  java-app:
+    image: "{{ application_image }}"
+    environment:
+      DB_USER: user
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_SERVER: mysql
+      DB_NAME: my-app-db
+    ports:
+      - "{{ application_http_port }}:8080"
+    depends_on:
+      - mysql
+    restart: unless-stopped
+  mysql:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: my-app-db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    restart: unless-stopped
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: '3306'
+      PMA_USER: user
+      PMA_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - '8081:80'
+    restart: unless-stopped
+volumes:
+  mysql-data:

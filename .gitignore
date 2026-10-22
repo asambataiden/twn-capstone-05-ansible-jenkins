@@ -13,3 +13,12 @@ __pycache__/
 
 .idea/
 .vscode/
+# Capstone 05 — local and runtime secrets
+**/secrets.vault.yml
+**/*.vault.yml
+**/.env
+**/*.pem
+**/*.key
+**/id_rsa
+**/id_ed25519
+**/known_hosts

@@ -1,0 +1,23 @@
+
+---
+plugin: amazon.aws.aws_ec2
+
+regions:
+  - eu-north-1
+
+filters:
+  instance-state-name: running
+  tag:Role: docker-server
+
+hostnames:
+  - dns-name
+
+compose:
+  ansible_host: public_ip_address
+  ansible_user: "'ec2-user'"
+
+groups:
+  ec2_docker_server: >-
+    ec2_tags.Role | default('') == 'docker-server'
+
+use_deprecated_tags: false

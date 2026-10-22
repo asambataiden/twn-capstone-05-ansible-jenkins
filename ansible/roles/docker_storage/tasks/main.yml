@@ -1,0 +1,23 @@
+---
+- name: Ensure Docker storage path exists
+  ansible.builtin.file:
+    path: /var/lib/docker
+    state: directory
+    owner: root
+    group: root
+    mode: '0711'
+
+- name: Inspect available bytes on Docker filesystem
+  ansible.builtin.command:
+    cmd: df -B1 --output=avail /var/lib/docker
+  register: docker_disk_space
+  changed_when: false
+
+- name: Enforce Docker free space requirement
+  ansible.builtin.assert:
+    that:
+      - (docker_disk_space.stdout_lines[-1] | trim | int) >= ((docker_min_free_gib | int) * 1024 ** 3)
+    fail_msg: >-
+      {{ inventory_hostname }}: Docker filesystem has less than
+      {{ docker_min_free_gib }} GiB free; increase storage before deploying.
+    success_msg: Docker storage preflight passed.
