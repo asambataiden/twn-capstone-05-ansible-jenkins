@@ -1,0 +1,59 @@
+
+---
+- name: Deploy and verify TWN Java application
+  hosts: ec2_docker_server
+  become: true
+  gather_facts: false
+
+  vars_files:
+    - ec2-docker-vars.yaml
+    - secrets.vault.yml
+
+  pre_tasks:
+    - name: Verify existing application directory
+      ansible.builtin.stat:
+        path: "{{ application_dir }}/docker-compose.yml"
+      register: existing_compose
+
+    - name: Require existing application installation
+      ansible.builtin.assert:
+        that:
+          - existing_compose.stat.exists
+          - existing_compose.stat.isreg
+        fail_msg: >-
+          The existing Docker Compose application was not found.
+          Initial infrastructure provisioning is required.
+
+    - name: Verify existing MySQL data volume
+      ansible.builtin.command:
+        cmd: docker volume inspect twn-demo-app_mysql-data
+      changed_when: false
+
+    - name: Verify existing MySQL container
+      ansible.builtin.command:
+        cmd: docker inspect twn-demo-app-mysql-1
+      changed_when: false
+      no_log: true
+
+  roles:
+    - application_deploy
+    - application_verify
+
+  post_tasks:
+    - name: Verify Java application HTTP health
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ application_http_port }}/"
+        method: GET
+        status_code: 200
+        return_content: false
+        timeout: 10
+      register: application_http
+      retries: 5
+      delay: 3
+      until: application_http.status == 200
+
+    - name: Report application deployment success
+      ansible.builtin.debug:
+        msg: >-
+          Deployment successful on {{ inventory_hostname }}.
+          Application HTTP status: {{ application_http.status }}.
