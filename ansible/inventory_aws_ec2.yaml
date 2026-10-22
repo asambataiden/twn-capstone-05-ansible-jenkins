@@ -1,5 +1,8 @@
 
 ---
+# TWN Capstone 05 — AWS EC2 Dynamic Inventory
+# Compatible with amazon.aws 7.2.0 on the Ansible controller.
+
 plugin: amazon.aws.aws_ec2
 
 regions:
@@ -18,6 +21,4 @@ compose:
 
 groups:
   ec2_docker_server: >-
-    ec2_tags.Role | default('') == 'docker-server'
-
-use_deprecated_tags: false
+    (tags.Role | default('')) == 'docker-server'
