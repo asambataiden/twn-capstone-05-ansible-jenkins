@@ -1,0 +1,15 @@
+
+---
+- name: Verify Ansible controller environment
+  hosts: local
+  gather_facts: false
+
+  tasks:
+    - name: Verify the Ansible connection
+      ansible.builtin.ping:
+
+    - name: Display controller verification message
+      ansible.builtin.debug:
+        msg: >-
+          Ansible controller verified successfully.
+          Ready for Jenkins pipeline integration.
