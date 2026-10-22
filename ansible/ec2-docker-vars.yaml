@@ -1,0 +1,35 @@
+
+---
+# Capstone 05: AWS EC2 Docker deployment configuration
+# Non-sensitive configuration only.
+# Sensitive variables are provided through Ansible Vault.
+
+# Operating system and deployment identity
+docker_user: ec2-user
+
+# Storage requirements
+docker_min_free_gib: 8
+
+# Docker Compose CLI plugin
+docker_compose_version: "v2.40.3"
+docker_compose_plugin_dir: /usr/local/lib/docker/cli-plugins
+
+docker_compose_arch_map:
+  x86_64: x86_64
+  aarch64: aarch64
+
+# TODO: Set trusted SHA-256 checksums for each architecture.
+# Empty checksums preserve current lab behavior but do not
+# provide artifact-integrity verification.
+docker_compose_checksums: {}
+
+# TWN Bootcamp exercise
+docker_pull_test_enabled: true
+
+# Application deployment
+application_dir: /opt/twn-demo-app
+application_image: asambataiden/demo-app:java-maven-2.0
+application_http_port: 8080
+
+# Public application image does not require registry login.
+docker_registry_login_enabled: false
