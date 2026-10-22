@@ -14,14 +14,16 @@ pipeline {
         ANSIBLE_HOST = '46.101.229.169'
         ANSIBLE_USER = 'root'
 
-        // Git-controlled Ansible releases
+        // Versioned release configuration
         RELEASE_ROOT = '/root/twn-capstone-05/releases'
         ANSIBLE_PLAYBOOK = 'deploy-application.yml'
 
-        // Restrict deployment to one AWS EC2 instance
+        // One AWS EC2 target for the first deployment
         TARGET_HOST = 'ec2-16-171-181-122.eu-north-1.compute.amazonaws.com'
 
-        // Verified EC2 SSH host keys
+        // Existing credentials and verified SSH host keys
+        EC2_SSH_USER = 'ec2-user'
+        EC2_PRIVATE_KEY = '/root/ansible-jenkins-key-pair.pem'
         EC2_KNOWN_HOSTS = '/root/.ssh/known_hosts_capstone05'
     }
 
@@ -34,11 +36,11 @@ pipeline {
                 sh '''
                     set -eu
 
-                    echo "=== Git Revision ==="
+                    echo "=== Checked-out Git revision ==="
                     git rev-parse HEAD
 
-                    echo "=== Git Branch ==="
-                    git log -1 --format="%s"
+                    echo "=== Latest commit ==="
+                    git log -1 --format='%s'
                 '''
             }
         }
@@ -48,7 +50,7 @@ pipeline {
                 sh '''
                     set -eu
 
-                    echo "=== Validating Ansible project ==="
+                    echo "=== Validate Git-controlled source ==="
 
                     test -f Jenkinsfile
                     test -f ansible/deploy-docker-new-user.yaml
@@ -69,10 +71,10 @@ pipeline {
                         test -f "ansible/roles/$role/tasks/main.yml"
                     done
 
-                    # Vault credentials must not be stored in Git
+                    # The Vault file stays on the Ansible controller.
                     test ! -e ansible/secrets.vault.yml
 
-                    echo "Ansible project structure verified."
+                    echo "Source validation passed."
                 '''
             }
         }
@@ -83,7 +85,7 @@ pipeline {
                     sh '''
                         set -eu
 
-                        echo "=== Testing Ansible controller connectivity ==="
+                        echo "=== Verify Jenkins to Ansible SSH ==="
 
                         ssh \
                           -o BatchMode=yes \
@@ -108,7 +110,7 @@ pipeline {
                         ARCHIVE="$(mktemp)"
                         trap 'rm -f "$ARCHIVE"' EXIT
 
-                        echo "=== Packaging Git-controlled release ==="
+                        echo "=== Package Git revision ==="
                         echo "Revision: $REVISION"
 
                         git archive --format=tar HEAD \
@@ -119,7 +121,7 @@ pipeline {
                           ansible/roles \
                           > "$ARCHIVE"
 
-                        echo "=== Transferring release to Ansible controller ==="
+                        echo "=== Transfer versioned release ==="
 
                         ssh \
                           -T \
@@ -143,16 +145,16 @@ pipeline {
                            ln -s /root/secrets.vault.yml \
                              '$RELEASE_DIR/ansible/secrets.vault.yml';
 
-                           printf '%s\\\\n' '$REVISION' \
+                           printf '%s\\n' '$REVISION' \
                              > '$RELEASE_DIR/REVISION';
 
                            test -f \
                              '$RELEASE_DIR/ansible/deploy-application.yml';
 
-                           echo 'Versioned Ansible release transferred.'" \
+                           echo 'Versioned release transferred.'" \
                           < "$ARCHIVE"
 
-                        echo "Git revision transferred: $REVISION"
+                        echo "Release transfer passed."
                     '''
                 }
             }
@@ -174,7 +176,7 @@ pipeline {
                             REVISION="$(git rev-parse --verify HEAD)"
                             RELEASE_DIR="$RELEASE_ROOT/${REVISION}-${BUILD_NUMBER}"
 
-                            echo "=== Running Ansible syntax validation ==="
+                            echo "=== Ansible syntax check ==="
 
                             printf '%s\\n' "$VAULT_PASSWORD" |
                               ssh \
@@ -185,6 +187,11 @@ pipeline {
                                 "$ANSIBLE_USER@$ANSIBLE_HOST" \
                                 "set -eu;
                                  cd '$RELEASE_DIR/ansible';
+
+                                 export ANSIBLE_HOST_KEY_CHECKING=True;
+                                 export ANSIBLE_PRIVATE_KEY_FILE='$EC2_PRIVATE_KEY';
+                                 export ANSIBLE_REMOTE_USER='$EC2_SSH_USER';
+                                 export ANSIBLE_SSH_ARGS='-o StrictHostKeyChecking=yes -o IdentitiesOnly=yes -o UserKnownHostsFile=$EC2_KNOWN_HOSTS';
 
                                  ansible-playbook \
                                    -i inventory_aws_ec2.yaml \
@@ -208,7 +215,7 @@ pipeline {
                         REVISION="$(git rev-parse --verify HEAD)"
                         RELEASE_DIR="$RELEASE_ROOT/${REVISION}-${BUILD_NUMBER}"
 
-                        echo "=== Testing strict SSH connectivity to AWS EC2 ==="
+                        echo "=== Verify AWS EC2 authentication ==="
 
                         ssh \
                           -T \
@@ -219,18 +226,20 @@ pipeline {
                           "set -eu;
                            cd '$RELEASE_DIR/ansible';
 
+                           test -r '$EC2_PRIVATE_KEY';
                            test -f '$EC2_KNOWN_HOSTS';
 
                            export ANSIBLE_HOST_KEY_CHECKING=True;
-
-                           export ANSIBLE_SSH_ARGS='-o StrictHostKeyChecking=yes -o UserKnownHostsFile=$EC2_KNOWN_HOSTS';
+                           export ANSIBLE_PRIVATE_KEY_FILE='$EC2_PRIVATE_KEY';
+                           export ANSIBLE_REMOTE_USER='$EC2_SSH_USER';
+                           export ANSIBLE_SSH_ARGS='-o StrictHostKeyChecking=yes -o IdentitiesOnly=yes -o UserKnownHostsFile=$EC2_KNOWN_HOSTS';
 
                            ansible ec2_docker_server \
                              -i inventory_aws_ec2.yaml \
                              --limit '$TARGET_HOST' \
                              -m ansible.builtin.ping"
 
-                        echo "EC2 SSH connectivity verified."
+                        echo "AWS EC2 connectivity passed."
                     '''
                 }
             }
@@ -240,7 +249,7 @@ pipeline {
             steps {
                 timeout(time: 15, unit: 'MINUTES') {
                     input(
-                        message: 'Deploy the TWN Java application to the selected AWS EC2 instance?',
+                        message: 'Deploy TWN Java application to EC2 instance i-0e83d63c88f0811bf?',
                         ok: 'Approve Deployment'
                     )
                 }
@@ -263,9 +272,9 @@ pipeline {
                             REVISION="$(git rev-parse --verify HEAD)"
                             RELEASE_DIR="$RELEASE_ROOT/${REVISION}-${BUILD_NUMBER}"
 
-                            echo "=== Starting approved Ansible deployment ==="
-                            echo "Git revision: $REVISION"
-                            echo "EC2 target: $TARGET_HOST"
+                            echo "=== Approved deployment ==="
+                            echo "Revision: $REVISION"
+                            echo "Target: $TARGET_HOST"
 
                             printf '%s\\n' "$VAULT_PASSWORD" |
                               ssh \
@@ -278,8 +287,9 @@ pipeline {
                                  cd '$RELEASE_DIR/ansible';
 
                                  export ANSIBLE_HOST_KEY_CHECKING=True;
-
-                                 export ANSIBLE_SSH_ARGS='-o StrictHostKeyChecking=yes -o UserKnownHostsFile=$EC2_KNOWN_HOSTS';
+                                 export ANSIBLE_PRIVATE_KEY_FILE='$EC2_PRIVATE_KEY';
+                                 export ANSIBLE_REMOTE_USER='$EC2_SSH_USER';
+                                 export ANSIBLE_SSH_ARGS='-o StrictHostKeyChecking=yes -o IdentitiesOnly=yes -o UserKnownHostsFile=$EC2_KNOWN_HOSTS';
 
                                  ansible-playbook \
                                    -i inventory_aws_ec2.yaml \
@@ -287,7 +297,7 @@ pipeline {
                                    --limit '$TARGET_HOST' \
                                    --vault-password-file /dev/stdin"
 
-                            echo "Ansible deployment completed."
+                            echo "Ansible deployment finished."
                         '''
                     }
                 }
@@ -303,7 +313,7 @@ pipeline {
                         REVISION="$(git rev-parse --verify HEAD)"
                         RELEASE_DIR="$RELEASE_ROOT/${REVISION}-${BUILD_NUMBER}"
 
-                        echo "=== Checking Java application HTTP status ==="
+                        echo "=== Check Java application HTTP status ==="
 
                         ssh \
                           -T \
@@ -315,8 +325,9 @@ pipeline {
                            cd '$RELEASE_DIR/ansible';
 
                            export ANSIBLE_HOST_KEY_CHECKING=True;
-
-                           export ANSIBLE_SSH_ARGS='-o StrictHostKeyChecking=yes -o UserKnownHostsFile=$EC2_KNOWN_HOSTS';
+                           export ANSIBLE_PRIVATE_KEY_FILE='$EC2_PRIVATE_KEY';
+                           export ANSIBLE_REMOTE_USER='$EC2_SSH_USER';
+                           export ANSIBLE_SSH_ARGS='-o StrictHostKeyChecking=yes -o IdentitiesOnly=yes -o UserKnownHostsFile=$EC2_KNOWN_HOSTS';
 
                            ansible ec2_docker_server \
                              -i inventory_aws_ec2.yaml \
@@ -324,7 +335,7 @@ pipeline {
                              -m ansible.builtin.uri \
                              -a 'url=http://127.0.0.1:8080/ method=GET status_code=200 return_content=false timeout=10'"
 
-                        echo "Java application HTTP verification passed."
+                        echo "Application HTTP verification passed."
                     '''
                 }
             }
@@ -333,15 +344,15 @@ pipeline {
 
     post {
         success {
-            echo 'SUCCESS: Capstone 05 Jenkins-Ansible pipeline completed.'
+            echo 'SUCCESS: Capstone 05 Jenkins-Ansible deployment verified.'
         }
 
         failure {
-            echo 'FAILURE: Review the Jenkins stage logs.'
+            echo 'FAILURE: Review the failed Jenkins stage.'
         }
 
         aborted {
-            echo 'ABORTED: Deployment was not approved or the pipeline was stopped.'
+            echo 'ABORTED: Pipeline stopped or deployment not approved.'
         }
 
         always {
