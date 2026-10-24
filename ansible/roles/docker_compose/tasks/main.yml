@@ -1,0 +1,24 @@
+---
+- name: Ensure Docker CLI plugin directory exists
+  ansible.builtin.file:
+    path: "{{ docker_compose_plugin_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Download pinned Docker Compose v2 CLI plugin
+  ansible.builtin.get_url:
+    url: "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-linux-{{ docker_compose_arch_map[ansible_facts['architecture']] }}"
+    dest: "{{ docker_compose_plugin_dir }}/docker-compose"
+    owner: root
+    group: root
+    mode: '0755'
+    timeout: 60
+    checksum: "{{ docker_compose_checksums[ansible_facts['architecture']] | default(omit) }}"
+
+- name: Verify installed Docker Compose v2
+  ansible.builtin.command:
+    cmd: docker compose version
+  register: compose_version
+  changed_when: false

@@ -1,0 +1,29 @@
+---
+- name: Ensure deployment account exists
+  ansible.builtin.user:
+    name: "{{ docker_user }}"
+    shell: /bin/bash
+    create_home: true
+    state: present
+
+# Docker group grants root-equivalent control of this EC2 host.
+- name: Grant deployment account Docker socket access
+  ansible.builtin.user:
+    name: "{{ docker_user }}"
+    groups: docker
+    append: true
+  register: docker_group_membership
+
+- name: Reset SSH connection if its user group changed
+  ansible.builtin.meta: reset_connection
+  when:
+    - docker_group_membership is changed
+    - docker_user == ansible_user | default('ec2-user')
+
+- name: Verify Docker access using deployment account
+  become: true
+  become_user: "{{ docker_user }}"
+  ansible.builtin.command:
+    cmd: docker ps
+  register: docker_access
+  changed_when: false

@@ -1,0 +1,18 @@
+---
+- name: Validate supported EC2 operating system and architecture
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['distribution'] == 'Amazon'
+      - ansible_facts['distribution_major_version'] == '2023'
+      - ansible_facts['architecture'] in docker_compose_arch_map
+    fail_msg: Requires Amazon Linux 2023 (x86_64 or aarch64).
+
+- name: Install baseline operating system packages
+  ansible.builtin.dnf:
+    name:
+      - python3
+      - curl-minimal
+      - unzip
+      - tar
+    state: present
+    update_cache: true

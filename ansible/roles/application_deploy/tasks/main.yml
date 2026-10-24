@@ -1,0 +1,50 @@
+---
+- name: Check application database secrets were supplied
+  ansible.builtin.assert:
+    that:
+      - mysql_root_password is defined
+      - mysql_password is defined
+      - (mysql_root_password | default('') | length) > 0
+      - (mysql_password | default('') | length) > 0
+    fail_msg: >-
+      Provide mysql_root_password and mysql_password through Ansible Vault.
+  no_log: true
+
+- name: Create application directory
+  ansible.builtin.file:
+    path: "{{ application_dir }}"
+    state: directory
+    owner: "{{ docker_user }}"
+    group: "{{ docker_user }}"
+    mode: '0750'
+
+- name: Render Compose manifest
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ application_dir }}/docker-compose.yml"
+    owner: "{{ docker_user }}"
+    group: "{{ docker_user }}"
+    mode: '0640'
+
+- name: Render private environment file
+  ansible.builtin.template:
+    src: app.env.j2
+    dest: "{{ application_dir }}/.env"
+    owner: "{{ docker_user }}"
+    group: "{{ docker_user }}"
+    mode: '0600'
+  no_log: true
+
+- name: Start Docker Compose application
+  become: true
+  become_user: "{{ docker_user }}"
+  community.docker.docker_compose_v2:
+    project_src: "{{ application_dir }}"
+    files:
+      - docker-compose.yml
+    state: present
+    pull: missing
+    remove_orphans: true
+    timeout: 120
+  register: application_compose_result
+  no_log: true

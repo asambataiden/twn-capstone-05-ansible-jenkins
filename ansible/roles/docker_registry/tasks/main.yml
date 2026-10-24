@@ -1,0 +1,29 @@
+---
+- name: Validate optional registry login credentials
+  ansible.builtin.assert:
+    that:
+      - dockerhub_username is defined
+      - dockerhub_password is defined
+      - (dockerhub_username | default('') | length) > 0
+      - (dockerhub_password | default('') | length) > 0
+    fail_msg: Registry login enabled but Docker Hub credentials are missing.
+  when: docker_registry_login_enabled | bool
+  no_log: true
+
+- name: Log in to Docker Hub as deployment user
+  become: true
+  become_user: "{{ docker_user }}"
+  community.docker.docker_login:
+    registry_url: https://index.docker.io/v1/
+    username: "{{ dockerhub_username }}"
+    password: "{{ dockerhub_password }}"
+  when: docker_registry_login_enabled | bool
+  no_log: true
+
+- name: Pull Redis image for Bootcamp exercise
+  become: true
+  become_user: "{{ docker_user }}"
+  community.docker.docker_image:
+    name: redis
+    source: pull
+  when: docker_pull_test_enabled | bool
