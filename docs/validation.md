@@ -43,3 +43,14 @@ The shared console excerpt directly verifies the final HTTP check and final pipe
 - **Build #7:** Jenkins and application HTTP validation reported success.
 
 See [Pipeline](pipeline.md), [Operations](operations.md) and [Security](security.md).
+
+## Two-host read-only preflight — 2026-10-25
+
+The operator executed the existing successful Build #7 Ansible release inventory from the DigitalOcean controller. AWS dynamic inventory found **two** EC2 instances in `ec2_docker_server`:
+
+- `ec2-56-228-35-22.eu-north-1.compute.amazonaws.com`
+- `ec2-16-171-181-122.eu-north-1.compute.amazonaws.com`
+
+With existing SSH known-hosts verification and credentials, **both** returned `ansible.builtin.ping` `pong` and `changed: false`. A read-only `ansible.builtin.uri` check on **both** returned `status: 200`, `msg: OK (215 bytes)`, and `changed: false` for `http://127.0.0.1:8080/`.
+
+**Evidence boundary:** These checks establish existing application availability and controller-to-host connectivity; they do **not** demonstrate that the Jenkins job deployed to both hosts. The two-target Jenkins branch is prepared but requires explicit operator approval for a live deployment, followed by saved sanitized `PLAY RECAP` and HTTP verification for each host. No new AWS infrastructure was provisioned.
