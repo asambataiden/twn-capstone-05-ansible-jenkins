@@ -1,6 +1,12 @@
 # Validation and evidence — Capstone 05
 
-## Demonstrated result
+## Jenkins Build #8 — two managed EC2 instances (verified)
+
+On **2026-10-25**, Jenkins Build **#8** ran feature-branch revision `c8885feaa0afdf669271b35f70870412adff3ff1` against both EC2 instances. The Ansible `PLAY RECAP` reported `ok=13 changed=0 unreachable=0 failed=0` for **each** host. Final `ansible.builtin.uri` returned HTTP **200** for each, and Jenkins finished **SUCCESS**. The existing application was already in the desired state (`changed=0`); this was not a fresh install.
+
+See [sanitized Build #8 evidence](../evidence/jenkins-build-08-two-ec2-2026-10-25.md).
+
+## Earlier Build #7 — one managed EC2 instance
 
 | Field | Observed evidence |
 | --- | --- |
@@ -24,9 +30,9 @@ The shared console excerpt directly verifies the final HTTP check and final pipe
 - [x] Strict SSH host verification and EC2 key authentication work.
 - [x] Automated pipeline reaches final HTTP 200 check.
 - [x] Jenkins Build #7 reports `SUCCESS`.
-- [ ] Archive sanitized full Build #7 console output, including deployment `PLAY RECAP`.
+- [x] Archive sanitized **Build #8** two-host `PLAY RECAP` and final HTTP health results.
 - [ ] Capture Jenkins stage-view screenshot for portfolio.
-- [ ] Review and merge the Capstone 05 PR.
+- [ ] Review and merge the two-host Capstone 05 PR (once documented evidence is reviewed).
 
 ## How to collect evidence safely
 
@@ -53,4 +59,4 @@ The operator executed the existing successful Build #7 Ansible release inventory
 
 With existing SSH known-hosts verification and credentials, **both** returned `ansible.builtin.ping` `pong` and `changed: false`. A read-only `ansible.builtin.uri` check on **both** returned `status: 200`, `msg: OK (215 bytes)`, and `changed: false` for `http://127.0.0.1:8080/`.
 
-**Evidence boundary:** These checks establish existing application availability and controller-to-host connectivity; they do **not** demonstrate that the Jenkins job deployed to both hosts. The two-target Jenkins branch is prepared but requires explicit operator approval for a live deployment, followed by saved sanitized `PLAY RECAP` and HTTP verification for each host. No new AWS infrastructure was provisioned.
+**Evidence boundary:** These checks establish existing application availability and controller-to-host connectivity; they do **not** demonstrate that the Jenkins job deployed to both hosts. The subsequent authorized Jenkins Build #8 confirmed two-host pipeline reconciliation and verification; see the evidence above. No new AWS infrastructure was provisioned.
