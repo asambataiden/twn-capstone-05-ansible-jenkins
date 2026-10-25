@@ -1,64 +1,51 @@
-# TWN DevOps Bootcamp — Capstone 05
+# Capstone 05 — Ansible Integration in Jenkins
 
-## Jenkins Integration with Ansible
+**TechWorld with Nana · Module 15 · Implementation demonstrated**
 
-**Status:** ✅ Jenkins automated deployment pipeline verified — **Build #7**, 22 October 2026  
-**Validated revision:** `0e91d7aabd9cd1d6a79729cd5279dbe97b379e0f`  
-**Scope:** TechWorld with Nana (TWN) AI-Enhanced DevOps Bootcamp practical project.
+## Objective
 
-### Overview
+Integrate Ansible with a Jenkins CI/CD pipeline to configure AWS EC2 application hosts and automate deployment from a separate Ansible control node. This repository contains the working single-target training implementation; the TWN example also describes configuring **two** EC2 managed instances.
 
-This project automates deployment of an existing **Docker Compose Java application** onto a selected **AWS EC2** instance through **GitHub → Jenkins → Ansible**. Jenkins checks out Git-controlled infrastructure code, transfers a versioned release to a dedicated Ansible controller, validates it, deploys with reusable roles, and verifies the application's HTTP response.
+## Architecture
 
 ```mermaid
 flowchart LR
-    G["GitHub"] --> J["Jenkins"]
-    J -->|"SSH"| A["Ansible Controller"]
-    A -->|"Dynamic inventory + SSH"| E["AWS EC2"]
-    E --> D["Docker Compose / Java app"]
-    E -->|"HTTP 200 check"| A
+    Git[GitHub repository] --> Jenkins[Jenkins CI/CD]
+    Jenkins -->|SSH / versioned release| Controller[Ansible control node]
+    Controller -->|AWS dynamic inventory + SSH| EC2[AWS EC2 managed host]
+    EC2 --> App[Docker Compose: Java application]
+    Controller -->|HTTP check| App
 ```
 
-### Technologies
+[Architecture and responsibilities](docs/architecture.md).
 
-Git · GitHub · Jenkins Pipeline/Groovy · Ansible Core 2.16.3 · Ansible Vault · AWS EC2 dynamic inventory · Amazon Linux 2023 · SSH · Docker Compose · Java · MySQL
+## Implementation
 
-### Documentation
+- Jenkins retrieves version-controlled playbooks and delegates execution to the Ansible controller.
+- Ansible selects the intended EC2 instance through AWS dynamic inventory and an explicit host limit.
+- Reusable roles deploy the existing Docker Compose application.
+- A final HTTP request from the EC2 host verifies the application response.
 
-| Document | Description |
-| --- | --- |
-| [Architecture](docs/architecture.md) | System components, trust boundaries and architecture diagrams |
-| [Use cases](docs/use-cases.md) | Actors, scenarios, acceptance criteria and failure cases |
-| [Pipeline](docs/pipeline.md) | Pipeline stages, versioned releases and CI/CD sequence |
-| [Security](docs/security.md) | SSH, Vault, network rules and explicit lab limitations |
-| [Operations](docs/operations.md) | Workflow, troubleshooting and recovery boundaries |
-| [Validation & evidence](docs/validation.md) | Build #7 results, test checklist and portfolio evidence |
+**Source:** [`Jenkinsfile`](Jenkinsfile), [Groovy pipeline](jenkins/capstone05.groovy), [Ansible playbook](ansible/deploy-application.yml), [roles](ansible/roles/).
 
-### Repository structure
+## Validation
 
-```text
-.
-├── Jenkinsfile                   # Short pipeline entry point
-├── jenkins/
-│   └── capstone05.groovy         # Project-local pipeline implementation
-├── ansible/
-│   ├── deploy-application.yml
-│   ├── deploy-docker-new-user.yaml
-│   ├── inventory_aws_ec2.yaml
-│   ├── ec2-docker-vars.yaml
-│   └── roles/                    # Eight reusable Ansible roles
-├── docs/                         # Architecture, use cases, runbooks and evidence
-└── README.md
-```
+| Item | Recorded result |
+|---|---|
+| Jenkins job | `TWN-Capstone-05-Ansible-Jenkins` |
+| Pipeline | **Build #7: SUCCESS** (22 October 2026) |
+| Tested revision | `0e91d7aabd9cd1d6a79729cd5279dbe97b379e0f` |
+| Remote application check | **HTTP 200** |
+| Complete Ansible `PLAY RECAP` evidence | **Not yet archived** |
+| Two managed EC2 instances from TWN example | **Not demonstrated** (single deployment target) |
+| Official TWN review | Not verified |
 
-### Verified result
+The final HTTP check and Jenkins success are recorded in the project validation notes; they do not independently prove every previous playbook task or database operation.
 
-Jenkins job `TWN-Capstone-05-Ansible-Jenkins` completed **Build #7** with `Finished: SUCCESS`. The final remote Ansible HTTP check returned **200 OK** from `http://127.0.0.1:8080/` on the targeted EC2 host. The full deployment `PLAY RECAP` should still be retained separately as evidence; the shared excerpt covered the health check and final pipeline outcome.
+## Documentation
 
-### Security and scope
+[Architecture](docs/architecture.md) · [Pipeline](docs/pipeline.md) · [Validation evidence](docs/validation.md) · [Operations](docs/operations.md) · [Security notes](docs/security.md)
 
-The target is limited to a single EC2 instance; SSH host-key validation is enforced; the EC2 key and encrypted Vault remain on the Ansible controller. There is **no manual approval gate** in this controlled training pipeline. No production-hardening, database backup platform, Terraform deployment, or multi-instance rollout is claimed. See [Security](docs/security.md) for risks and deferred work.
+**Security boundary:** SSH identity and Vault data stay outside Git; host-key verification is enforced in the tested workflow. This is a training deployment, not a production HA system. Do not publish credentials, logs containing secrets or internal infrastructure details.
 
----
-
-*Part of the TechWorld with Nana DevOps Bootcamp portfolio.*
+**TWN submission:** [`main` branch](https://github.com/asambataiden/twn-capstone-05-ansible-jenkins/tree/main), subject to reviewer access and secret/history review.
