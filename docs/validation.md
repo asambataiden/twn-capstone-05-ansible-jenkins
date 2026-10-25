@@ -4,7 +4,7 @@
 
 On **2026-10-25**, Jenkins Build **#8** ran feature-branch revision `c8885feaa0afdf669271b35f70870412adff3ff1` against both EC2 instances. The Ansible `PLAY RECAP` reported `ok=13 changed=0 unreachable=0 failed=0` for **each** host. Final `ansible.builtin.uri` returned HTTP **200** for each, and Jenkins finished **SUCCESS**. The existing application was already in the desired state (`changed=0`); this was not a fresh install.
 
-See [sanitized Build #8 evidence](../evidence/jenkins-build-08-two-ec2-2026-10-25.md).
+See [sanitized Build #8 evidence](../evidence/jenkins-build-08-two-ec2-2026-10-25.md) and the [Jenkins Build #8 Stage View screenshot](../evidence/screenshots/jenkins-build-08-stage-view-2026-10-25.jpg). The screenshot confirms all stages were successful; the console `PLAY RECAP` independently establishes the two-host results.
 
 ## Earlier Build #7 — one managed EC2 instance
 
@@ -31,8 +31,8 @@ The shared console excerpt directly verifies the final HTTP check and final pipe
 - [x] Automated pipeline reaches final HTTP 200 check.
 - [x] Jenkins Build #7 reports `SUCCESS`.
 - [x] Archive sanitized **Build #8** two-host `PLAY RECAP` and final HTTP health results.
-- [ ] Capture Jenkins stage-view screenshot for portfolio.
-- [ ] Review and merge the two-host Capstone 05 PR (once documented evidence is reviewed).
+- [x] Capture and publish Jenkins Build #8 Stage View screenshot for portfolio.
+- [x] Two-host Capstone 05 implementation PR #3 merged.
 
 ## How to collect evidence safely
 
