@@ -1,10 +1,10 @@
 # Capstone 05 — Ansible Integration in Jenkins
 
-**TechWorld with Nana · Module 15 · Implementation demonstrated**
+**TechWorld with Nana · Module 15 · Two-EC2 deployment verified**
 
 ## Objective
 
-Integrate Ansible with a Jenkins CI/CD pipeline to configure AWS EC2 application hosts and automate deployment from a separate Ansible control node. This repository contains the working single-target training implementation; the TWN example also describes configuring **two** EC2 managed instances.
+Integrate Ansible with a Jenkins CI/CD pipeline to configure AWS EC2 application hosts and automate deployment from a separate Ansible control node. This repository contains the verified Jenkins–Ansible training implementation managing **two** EC2 instances.
 
 ## Architecture
 
@@ -22,7 +22,7 @@ flowchart LR
 ## Implementation
 
 - Jenkins retrieves version-controlled playbooks and delegates execution to the Ansible controller.
-- Ansible selects the intended EC2 instance through AWS dynamic inventory and an explicit host limit.
+- Ansible selects two approved EC2 instances through AWS dynamic inventory and an explicit two-host limit.
 - Reusable roles deploy the existing Docker Compose application.
 - A final HTTP request from the EC2 host verifies the application response.
 
@@ -33,14 +33,14 @@ flowchart LR
 | Item | Recorded result |
 |---|---|
 | Jenkins job | `TWN-Capstone-05-Ansible-Jenkins` |
-| Pipeline | **Build #7: SUCCESS** (22 October 2026) |
-| Tested revision | `0e91d7aabd9cd1d6a79729cd5279dbe97b379e0f` |
-| Remote application check | **HTTP 200** |
-| Complete Ansible `PLAY RECAP` evidence | **Not yet archived** |
-| Two managed EC2 instances from TWN example | **Not demonstrated** (single deployment target) |
+| Pipeline | **Build #8: SUCCESS** (25 October 2026) |
+| Tested revision | `c8885feaa0afdf669271b35f70870412adff3ff1` |
+| Remote application check | **HTTP 200 on both instances** |
+| Complete Ansible `PLAY RECAP` evidence | **Build #8 captured and summarized** |
+| Two managed EC2 instances from TWN example | **Verified in Jenkins Build #8** |
 | Official TWN review | Not verified |
 
-The final HTTP check and Jenkins success are recorded in the project validation notes; they do not independently prove every previous playbook task or database operation.
+The two-host Ansible PLAY RECAP was `ok=13 changed=0 unreachable=0 failed=0` on each host. This demonstrates successful, idempotent reconciliation of **already installed** applications, not fresh provisioning or database migration. See [Build #8 evidence](evidence/jenkins-build-08-two-ec2-2026-10-25.md).
 
 ## Documentation
 
