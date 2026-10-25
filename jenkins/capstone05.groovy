@@ -4,7 +4,7 @@ def runPipeline() {
         'ANSIBLE_HOST=46.101.229.169',
         'ANSIBLE_USER=root',
         'RELEASE_ROOT=/root/twn-capstone-05/releases',
-        'TARGET_HOST=ec2-16-171-181-122.eu-north-1.compute.amazonaws.com',
+        'TARGET_HOSTS=ec2-16-171-181-122.eu-north-1.compute.amazonaws.com,ec2-56-228-35-22.eu-north-1.compute.amazonaws.com',
         'EC2_PRIVATE_KEY=/root/ansible-jenkins-key-pair.pem',
         'EC2_KNOWN_HOSTS=/root/.ssh/known_hosts_capstone05',
         'EC2_SSH_USER=ec2-user'
@@ -151,7 +151,12 @@ stage('Verify EC2 Connectivity') {
 
                        ansible ec2_docker_server \
                          -i inventory_aws_ec2.yaml \
-                         --limit '$TARGET_HOST' \
+                         --limit '$TARGET_HOSTS' \
+                         --list-hosts | grep -Eq 'hosts \\(2\\):';
+
+                       ansible ec2_docker_server \
+                         -i inventory_aws_ec2.yaml \
+                         --limit '$TARGET_HOSTS' \
                          -m ansible.builtin.ping"
 
                     echo "EC2 connectivity passed."
@@ -175,7 +180,7 @@ stage('Deploy Application') {
                         RELEASE_DIR="$RELEASE_ROOT/${REVISION}-${BUILD_NUMBER}"
 
                         echo "Deploying revision: $REVISION"
-                        echo "Target: $TARGET_HOST"
+                        echo "Approved EC2 targets: $TARGET_HOSTS"
 
                         printf '%s\\n' "$VAULT_PASSWORD" |
                           ssh \
@@ -194,7 +199,7 @@ stage('Deploy Application') {
                              ansible-playbook \
                                -i inventory_aws_ec2.yaml \
                                deploy-application.yml \
-                               --limit '$TARGET_HOST' \
+                               --limit '$TARGET_HOSTS' \
                                --vault-password-file /dev/stdin"
 
                         echo "Application deployment completed."
@@ -226,7 +231,7 @@ stage('Verify Application HTTP') {
 
                        ansible ec2_docker_server \
                          -i inventory_aws_ec2.yaml \
-                         --limit '$TARGET_HOST' \
+                         --limit '$TARGET_HOSTS' \
                          -m ansible.builtin.uri \
                          -a 'url=http://127.0.0.1:8080/ method=GET status_code=200 return_content=false timeout=10'"
 
