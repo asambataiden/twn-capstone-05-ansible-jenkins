@@ -152,6 +152,11 @@ stage('Verify EC2 Connectivity') {
                        ansible ec2_docker_server \
                          -i inventory_aws_ec2.yaml \
                          --limit '$TARGET_HOSTS' \
+                         --list-hosts | grep -Eq 'hosts \\(2\\):';
+
+                       ansible ec2_docker_server \
+                         -i inventory_aws_ec2.yaml \
+                         --limit '$TARGET_HOSTS' \
                          -m ansible.builtin.ping"
 
                     echo "EC2 connectivity passed."
