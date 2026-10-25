@@ -82,12 +82,16 @@ Build #7 (22 October 2026; **one host only**), revision `0e91d7aabd9cd1d6a79729c
 
 See [Validation](validation.md) and [Operations](operations.md).
 
-## Two-instance TWN validation (proposed; not yet executed through Jenkins)
+## Two-instance TWN validation (verified with Jenkins Build #8)
 
-The feature branch `feat/cap05-two-ec2-jenkins-targets` changes the fixed Ansible host limit in `jenkins/capstone05.groovy` from one EC2 host to **two explicitly verified** EC2 DNS names. Jenkins `Verify EC2 Connectivity`, `Deploy Application`, and `Verify Application HTTP` use the *same* limit. This aligns the pipeline with the TWN two-EC2 exercise without modifying inventory, roles, credentials or provisioning.
+The verified feature branch `feat/cap05-two-ec2-jenkins-targets` changes the fixed Ansible host limit in `jenkins/capstone05.groovy` from one EC2 host to **two explicitly verified** EC2 DNS names. Jenkins `Verify EC2 Connectivity`, `Deploy Application`, and `Verify Application HTTP` use the *same* limit. This aligns the pipeline with the TWN two-EC2 exercise without modifying inventory, roles, credentials or provisioning.
 
 On 25 October 2026, the Ansible controller's dynamic inventory listed both hosts in `ec2_docker_server`; `ansible.builtin.ping` succeeded (`changed: false`, `pong`) for each, and `ansible.builtin.uri` returned HTTP 200 from `127.0.0.1:8080` on each (`OK (215 bytes)`). **These were controller-side read-only checks, not a two-host Jenkins deployment.**
 
-**Before running Jenkins on this branch:** confirm both currently active EC2 hosts belong to this disposable training application, capture backup/recovery state, review the Docker Compose role's `remove_orphans` behavior, confirm the correct Vault credential and Jenkins job branch, and deliberately authorize changes on **both** instances. Jenkins deploy is not read-only and will reconcile Compose services on each host. Never trigger automatically simply to gather evidence.
+**Operational caution for subsequent Jenkins runs:** confirm both currently active EC2 hosts belong to this disposable training application, capture backup/recovery state, review the Docker Compose role's `remove_orphans` behavior, confirm the correct Vault credential and Jenkins job branch, and deliberately authorize changes on **both** instances. Jenkins deploy is not read-only and will reconcile Compose services on each host. Never trigger automatically simply to gather evidence.
 
 After a successful two-host build, archive a **sanitized** full `PLAY RECAP` identifying both hosts with `failed=0` and `unreachable=0`, the Jenkins job/build/revision, and an HTTP 200 result for each host. Without that output, two-host Jenkins deployment remains **unverified**.
+
+### Successful two-host Jenkins run
+
+Jenkins Build **#8** (2026-10-25) checked out revision `c8885feaa0afdf669271b35f70870412adff3ff1`, transferred a versioned Ansible release, ran deployment reconciliation for both hosts (`ok=13 changed=0 failed=0 unreachable=0` for each) and verified final HTTP 200 from both Java applications. The job finished **SUCCESS**. The already-deployed services were unchanged, which supports repeat-run idempotency; this is not fresh provisioning. See [sanitized evidence](../evidence/jenkins-build-08-two-ec2-2026-10-25.md).
