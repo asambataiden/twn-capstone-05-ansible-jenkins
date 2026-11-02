@@ -12,10 +12,10 @@ This short summary provides a reviewer entry point; the main README and linked p
 
 ## Reviewer navigation
 
-- [`README.md`](../../README.md)
-- [`docs/architecture.md`](../../docs/architecture.md)
-- [`docs/validation.md`](../../docs/validation.md)
-- [`evidence/jenkins-build-08-two-ec2-2026-10-25.md`](../../evidence/jenkins-build-08-two-ec2-2026-10-25.md)
+- [`README.md`](../README.md)
+- [`docs/architecture.md`](../docs/architecture.md)
+- [`docs/validation.md`](../docs/validation.md)
+- [`evidence/jenkins-build-08-two-ec2-2026-10-25.md`](../evidence/jenkins-build-08-two-ec2-2026-10-25.md)
 
 ## Verification qualification
 
