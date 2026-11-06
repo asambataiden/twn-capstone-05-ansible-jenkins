@@ -48,4 +48,4 @@ The two-host Ansible PLAY RECAP was `ok=13 changed=0 unreachable=0 failed=0` on 
 
 **Security boundary:** SSH identity and Vault data stay outside Git; host-key verification is enforced in the tested workflow. This is a training deployment, not a production HA system. Do not publish credentials, logs containing secrets or internal infrastructure details.
 
-**TWN submission:** [`main` branch](https://github.com/asambataiden/twn-capstone-05-ansible-jenkins/tree/main), subject to reviewer access and secret/history review.
+**Reviewer access:** The [`main` branch](https://github.com/asambataiden/twn-capstone-05-ansible-jenkins/tree/main) is public. Git history was screened using Gitleaks with no findings; badge validation and official acceptance are separate.
